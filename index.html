@@ -104,6 +104,23 @@
   .seqCard .handle button:hover{background:#f3f4f6}
   .seqGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .dayHead{background:linear-gradient(90deg,#5a2d4d,#8E2D5A);color:#fff;padding:9px 14px;border-radius:9px;font-weight:800;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .dayBtn{background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:11px}
+  .dayBtn:hover{background:rgba(255,255,255,.35)}
+  .grip{cursor:grab;color:#B4472E;font-size:18px;line-height:1;user-select:none;padding:0 3px;align-self:center}
+  .grip:active{cursor:grabbing}
+  .seqCard.dragover,.dayHead.dragover{outline:2px dashed #8E2D5A;outline-offset:3px}
+  .seqCard.dragging{opacity:.45}
+  /* glossaire */
+  .glossSearch{position:relative;margin-bottom:6px}
+  .glossSearch input{width:100%;padding:12px 14px 12px 40px;font-size:15px;border:1.5px solid var(--line);border-radius:12px}
+  .glossSearch .ico{position:absolute;left:14px;top:11px;color:#9aa0a6;font-size:16px}
+  .glossCount{font-size:12.5px;color:var(--muted);margin:4px 2px 16px}
+  .glossCat{margin:20px 0 9px;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:800}
+  .glossItem{border:1px solid var(--line);border-left:4px solid #E8A33D;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
+  .glossItem h4{margin:0 0 4px;font-size:14.5px;color:#2b2b33}
+  .glossItem p{margin:0;font-size:13px;color:#555;line-height:1.5}
+  .glossEmpty{text-align:center;color:#9aa0a6;padding:28px;border:1.5px dashed var(--line);border-radius:12px}
+  mark{background:#ffe28a;padding:0 1px;border-radius:2px}
   @media(max-width:640px){.grid,.win .selrow,.seqGrid{grid-template-columns:1fr}body{padding:10px}main{padding:20px 16px}.exportBar{padding:14px 16px;margin:24px -16px -20px}.tabs{padding:0 10px}.tab{padding:12px 10px;font-size:12.5px}}
 </style>
 </head>
@@ -120,6 +137,7 @@
   <nav class="tabs">
     <button class="tab active" id="tabbtn1" onclick="switchTab(1)">① Raisonnement pédagogique</button>
     <button class="tab" id="tabbtn2" onclick="switchTab(2)">② Scénario &amp; programme</button>
+    <button class="tab" id="tabbtn3" onclick="switchTab(3)">③ Glossaire</button>
   </nav>
 
   <main>
@@ -167,6 +185,15 @@
       <div id="scnList"></div>
       <datalist id="outilsList"></datalist>
     </div><!-- /tab2 -->
+
+    <div id="tab3" class="tabpane">
+      <h2 class="sec" style="color:#8E2D5A">Glossaire — s'acculturer à la terminologie pédagogique</h2>
+      <p style="font-style:italic;color:#666;margin:-4px 0 16px;font-size:13.5px;line-height:1.5">Définitions des principaux <strong>concepts</strong>, <strong>méthodes</strong> et <strong>outils</strong> employés dans l'outil et ses menus déroulants. Tapez un mot pour filtrer instantanément — utile pour vous familiariser avec le vocabulaire de l'ingénierie de formation.</p>
+      <div class="glossSearch"><span class="ico">🔍</span><input id="glossQ" oninput="renderGlossary()" placeholder="Rechercher un terme, une méthode, un outil…  (ex : Bloom, serious game, Kirkpatrick, Wooclap)"></div>
+      <div class="glossCount" id="glossCount"></div>
+      <div id="glossList"></div>
+      <p style="font-size:12px;color:#9aa0a6;margin-top:18px;line-height:1.5">💡 Recherche instantanée exécutée dans votre navigateur (hors-ligne, insensible aux accents et à la casse). Définitions à visée d'acculturation, non normatives.</p>
+    </div><!-- /tab3 -->
   </main>
 
   <footer class="sig">
@@ -305,7 +332,7 @@ function esc(s){return (s||'').replace(/[&<>]/g,function(c){return{'&':'&amp;','
 var METHODES=['Exposé interactif','Démonstration','Étude de cas','Travaux en sous-groupes','Jeu de rôle','Simulation','Serious game','Escape game pédagogique','Quiz interactif (Wooclap/Kahoot)','Jeu de cartes pédagogiques','Débat mouvant','Théâtre-forum','Photolangage','Brainstorming','Classe inversée','Chambre des erreurs','Retour d’expérience','Plan d’action individuel'];
 var OUTILS=['Paperboard','Vidéoprojecteur','Wooclap','Kahoot','Genially','Klaxoon / Beekast','Cartes pédagogiques','Plateau de jeu','Mannequin de simulation','Cas clinique','Vidéo','Fiches mémo','Plateforme LMS','Grille d’observation','Quiz papier'];
 var DUREES=[15,30,45,60,75,90,120];
-var FORMATS={'1h':{label:'1 heure',target:60},'2h':{label:'2 heures',target:120},'3h':{label:'3 heures',target:180},'1j':{label:'1 jour',target:360},'2j':{label:'2 jours',target:720},'3j':{label:'3 jours',target:1080}};
+var FORMATS={'1h':{label:'1 heure',target:60},'2h':{label:'2 heures',target:120},'3h':{label:'3 heures',target:180},'1j':{label:'1 jour (7 h)',target:420},'2j':{label:'2 jours (7 h/j)',target:840},'3j':{label:'3 jours (7 h/j)',target:1260}};
 var scenario=[];var seqId=0;
 
 function escA(s){return esc(s).replace(/"/g,'&quot;');}
@@ -319,10 +346,11 @@ function newSeq(kind,d){d=d||{};var o={id:++seqId,kind:kind,titre:'',dureeMin:ki
 })();
 
 function switchTab(n){
-  document.getElementById('tab1').className='tabpane'+(n===1?' active':'');
-  document.getElementById('tab2').className='tabpane'+(n===2?' active':'');
-  document.getElementById('tabbtn1').className='tab'+(n===1?' active':'');
-  document.getElementById('tabbtn2').className='tab'+(n===2?' active':'');
+  [1,2,3].forEach(function(i){
+    var p=document.getElementById('tab'+i),b=document.getElementById('tabbtn'+i);
+    if(p)p.className='tabpane'+(i===n?' active':'');
+    if(b)b.className='tab'+(i===n?' active':'');
+  });
 }
 function parseHM(s){var m=/^(\d{1,2}):(\d{2})$/.exec((s||'').trim());if(!m)return 540;return (+m[1])*60+(+m[2]);}
 function fmtHM(x){x=((x%1440)+1440)%1440;var h=Math.floor(x/60),m=x%60;return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
@@ -355,7 +383,23 @@ function durSelect(id,v){
 function methSelect(id,v){
   return '<select onchange="setF('+id+',&#39;methode&#39;,this.value)"><option value="">— méthode —</option>'+METHODES.map(function(m){return '<option'+(m===v?' selected':'')+'>'+m+'</option>';}).join('')+'</select>';
 }
-function handleBtns(id){return '<div class="handle"><button title="Monter" onclick="moveItem('+id+',-1)">▲</button><button title="Descendre" onclick="moveItem('+id+',1)">▼</button><button title="Supprimer" onclick="delItem('+id+')">✕</button></div>';}
+function handleBtns(id){return '<div class="handle"><span class="grip" draggable="true" ondragstart="dragStart(event,'+id+')" title="Glisser pour déplacer">⠿</span><button title="Dupliquer" onclick="dupItem('+id+')">⧉</button><button title="Monter" onclick="moveItem('+id+',-1)">▲</button><button title="Descendre" onclick="moveItem('+id+',1)">▼</button><button title="Supprimer" onclick="delItem('+id+')">✕</button></div>';}
+function dropAttrs(id){return ' data-id="'+id+'" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOn(event,'+id+')"';}
+var dragId=null;
+function dragStart(e,id){dragId=id;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(id));}catch(_){}}
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';if(e.currentTarget)e.currentTarget.classList.add('dragover');}
+function dragLeave(e){if(e.currentTarget)e.currentTarget.classList.remove('dragover');}
+function dropOn(e,targetId){
+  e.preventDefault();if(e.currentTarget)e.currentTarget.classList.remove('dragover');
+  if(dragId==null||dragId===targetId){dragId=null;return;}
+  var from=scenario.findIndex(function(x){return x.id===dragId;});if(from<0){dragId=null;return;}
+  var it=scenario.splice(from,1)[0];
+  var to=scenario.findIndex(function(x){return x.id===targetId;});
+  if(to<0)to=scenario.length;
+  scenario.splice(to,0,it);
+  dragId=null;renderScenario();
+}
+function dupItem(id){var i=scenario.findIndex(function(x){return x.id===id;});if(i<0)return;var copy=Object.assign({},scenario[i]);copy.id=++seqId;scenario.splice(i+1,0,copy);renderScenario();}
 
 function renderScenario(){
   var wrap=document.getElementById('scnList');if(!wrap)return;
@@ -366,11 +410,11 @@ function renderScenario(){
   rows.forEach(function(r){
     var it=r.it,id=it.id;
     if(it.kind==='day'){
-      html+='<div class="dayHead"><input value="'+escA(it.dayLabel)+'" oninput="setF('+id+',&#39;dayLabel&#39;,this.value)" style="background:transparent;border:0;color:#fff;font-weight:800;font-size:15px;width:70%" placeholder="Jour"><button onclick="delItem('+id+')" style="background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer">✕</button></div>';
+      html+='<div class="dayHead"'+dropAttrs(id)+'><span class="grip" draggable="true" ondragstart="dragStart(event,'+id+')" style="color:#fff" title="Glisser pour déplacer">⠿</span><input value="'+escA(it.dayLabel)+'" oninput="setF('+id+',&#39;dayLabel&#39;,this.value)" style="background:transparent;border:0;color:#fff;font-weight:800;font-size:15px;flex:1" placeholder="Jour"><button class="dayBtn" title="Monter" onclick="moveItem('+id+',-1)">▲</button><button class="dayBtn" title="Descendre" onclick="moveItem('+id+',1)">▼</button><button class="dayBtn" title="Supprimer" onclick="delItem('+id+')">✕</button></div>';
       return;
     }
     if(it.kind==='inter'){
-      html+='<div class="seqCard inter"><div class="rowtop"><span class="time" style="background:#f5e9f0;color:#8E2D5A">⟲ INTERSESSION</span>'
+      html+='<div class="seqCard inter"'+dropAttrs(id)+'><div class="rowtop"><span class="time" style="background:#f5e9f0;color:#8E2D5A">⟲ INTERSESSION</span>'
         +'<input style="flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px" value="'+escA(it.titre)+'" oninput="setF('+id+',&#39;titre&#39;,this.value)" placeholder="Intersession — mise en œuvre terrain">'
         +handleBtns(id)+'</div>'
         +'<div class="seqGrid"><div class="field"><label>Durée (période)</label><input value="'+escA(it.dureeText)+'" oninput="setF('+id+',&#39;dureeText&#39;,this.value)" placeholder="Ex : 3 à 4 semaines"></div>'
@@ -379,7 +423,7 @@ function renderScenario(){
       return;
     }
     var isPause=it.kind==='pause';
-    html+='<div class="seqCard'+(isPause?' pause':'')+'"><div class="rowtop">'
+    html+='<div class="seqCard'+(isPause?' pause':'')+'"'+dropAttrs(id)+'><div class="rowtop">'
       +'<span class="time">'+r.s+'–'+r.e+'</span>'
       +'<input style="flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px" value="'+escA(it.titre)+'" oninput="setF('+id+',&#39;titre&#39;,this.value)" placeholder="'+(isPause?'Pause / Déjeuner':'Titre de la séquence')+'">'
       +handleBtns(id)+'</div>';
@@ -415,11 +459,11 @@ function generateTemplate(){
     newSeq('seq',{titre:'Accueil, attentes & ice-breaker',dureeMin:30,objectifs:'Créer le groupe, recueillir les attentes',methode:'Photolangage',outils:'Paperboard'}),
     newSeq('seq',{titre:'Module 1 — Apports fondamentaux',dureeMin:90,objectifs:'Acquérir les savoirs clés',methode:'Exposé interactif',outils:'Wooclap'}),
     newSeq('pause',{titre:'Pause',dureeMin:15}),
-    newSeq('seq',{titre:'Module 2 — Atelier ludopédagogique',dureeMin:75,objectifs:'Manipuler les concepts en équipe',methode:'Serious game',outils:'Cartes pédagogiques'}),
+    newSeq('seq',{titre:'Module 2 — Atelier ludopédagogique',dureeMin:90,objectifs:'Manipuler les concepts en équipe',methode:'Serious game',outils:'Cartes pédagogiques'}),
     newSeq('pause',{titre:'Déjeuner',dureeMin:60}),
     newSeq('seq',{titre:'Module 3 — Mise en situation',dureeMin:90,objectifs:'Transférer en contexte réel',methode:'Simulation',outils:'Cas clinique'}),
     newSeq('pause',{titre:'Pause',dureeMin:15}),
-    newSeq('seq',{titre:'Module 4 — Entraînement & pratique',dureeMin:75,objectifs:'Consolider les savoir-faire',methode:'Jeu de rôle',outils:'Grille d’observation'}),
+    newSeq('seq',{titre:'Module 4 — Entraînement & pratique',dureeMin:90,objectifs:'Consolider les savoir-faire',methode:'Jeu de rôle',outils:'Grille d’observation'}),
     newSeq('seq',{titre:'Synthèse, quiz bilan & plan d’action',dureeMin:30,objectifs:'Évaluer et engager le transfert',methode:'Quiz interactif (Wooclap/Kahoot)',outils:'Kahoot'})
   ];};
   var inter=function(){return newSeq('inter',{titre:'Intersession — mise en œuvre terrain',dureeText:'3 à 4 semaines',objectifs:'Ancrer les bonnes pratiques',contenus:'Plan d’action individuel appliqué en situation réelle, recueil de preuves, préparation du RETEX pour la journée suivante'});};
@@ -651,8 +695,89 @@ function resetAll(){
   document.querySelectorAll('input,select,textarea').forEach(function(e){if(e.id!=='modalTA')e.value='';});
   update();toast('↺ Canvas réinitialisé');
 }
+/* ================= GLOSSAIRE ================= */
+var CATCOL={'Fondamentaux':'#8E2D5A','Méthodes':'#D96C2C','Ludopédagogie':'#E8A33D','Évaluation':'#B4472E','Outils':'#2f7d6b'};
+var GLOSSARY=[
+ {cat:'Fondamentaux',term:'Ingénierie pédagogique',def:'Démarche méthodique de conception, mise en œuvre et évaluation d’un dispositif de formation, de l’analyse du besoin jusqu’à la mesure des effets.'},
+ {cat:'Fondamentaux',term:'Objectif pédagogique',def:'Énoncé de ce que l’apprenant sera capable de faire à l’issue de la formation, formulé avec un verbe d’action observable et mesurable.'},
+ {cat:'Fondamentaux',term:'Objectif opérationnel',def:'Déclinaison concrète et évaluable d’un objectif pédagogique au niveau d’une séquence ou d’une activité.'},
+ {cat:'Fondamentaux',term:'Compétence',def:'Capacité à mobiliser en situation un ensemble de savoirs, savoir-faire et savoir-être pour agir efficacement.'},
+ {cat:'Fondamentaux',term:'Savoir / Savoir-faire / Savoir-être',def:'Les trois registres d’apprentissage : connaissances (cognitif), gestes et procédures (pratique), attitudes et postures (relationnel).'},
+ {cat:'Fondamentaux',term:'Prérequis',def:'Connaissances ou compétences que l’apprenant doit déjà posséder pour suivre utilement la formation.'},
+ {cat:'Fondamentaux',term:'Analyse des besoins',def:'Étape initiale identifiant l’écart entre compétences actuelles et attendues, afin de cibler les objectifs de formation.'},
+ {cat:'Fondamentaux',term:'Scénario pédagogique',def:'Déroulé structuré et minuté d’une formation, séquence par séquence : objectifs, contenus, méthodes, outils et durées.'},
+ {cat:'Fondamentaux',term:'Séquence pédagogique',def:'Unité de déroulé regroupant des activités autour d’un même objectif ; ici cadencée par blocs d’environ 90 minutes.'},
+ {cat:'Fondamentaux',term:'Modalité pédagogique',def:'Forme que prend l’apprentissage : présentiel ou distanciel, synchrone ou asynchrone, individuel ou collectif.'},
+ {cat:'Fondamentaux',term:'Multimodal / Blended learning',def:'Dispositif combinant plusieurs modalités (présentiel + distanciel, synchrone + asynchrone) pour renforcer l’apprentissage.'},
+ {cat:'Fondamentaux',term:'Classe inversée',def:'Approche où les apports théoriques sont consultés en amont, le temps collectif étant réservé à la pratique et aux échanges.'},
+ {cat:'Fondamentaux',term:'Micro-learning',def:'Apprentissage par petites unités courtes (2 à 5 min), ciblées sur un seul objectif, faciles à consommer et à réactiver.'},
+ {cat:'Fondamentaux',term:'Alignement pédagogique',def:'Cohérence entre objectifs, activités d’apprentissage et modalités d’évaluation ; principe clé du « constructive alignment ».'},
+ {cat:'Fondamentaux',term:'Taxonomie de Bloom',def:'Classification des niveaux cognitifs (mémoriser, comprendre, appliquer, analyser, évaluer, créer) qui aide à formuler des objectifs progressifs.'},
+ {cat:'Fondamentaux',term:'Charge cognitive',def:'Quantité d’information traitée simultanément par la mémoire de travail ; la maîtriser évite la surcharge et favorise l’apprentissage.'},
+ {cat:'Fondamentaux',term:'Répétition espacée',def:'Réactivation des acquis à intervalles croissants (spaced repetition) pour consolider la mémorisation à long terme.'},
+ {cat:'Fondamentaux',term:'Feedback',def:'Retour d’information donné à l’apprenant sur sa performance, immédiat et spécifique, pour orienter sa progression.'},
+ {cat:'Fondamentaux',term:'Débriefing',def:'Temps d’analyse réflexive après une mise en situation ou un jeu : on revient sur le vécu, les décisions et les enseignements.'},
+ {cat:'Fondamentaux',term:'Intersession',def:'Période entre deux temps de formation, dédiée à l’expérimentation sur le terrain et à l’ancrage des bonnes pratiques.'},
+ {cat:'Fondamentaux',term:'Transfert des acquis',def:'Application effective en situation de travail des compétences développées en formation ; finalité de tout dispositif.'},
+ {cat:'Fondamentaux',term:'Plan d’action individuel',def:'Engagement concret pris par l’apprenant pour transposer ses acquis dans sa pratique, avec échéances et indicateurs.'},
+ {cat:'Fondamentaux',term:'Référentiel de compétences',def:'Document listant les compétences attendues pour un métier ou une activité ; base de l’analyse des besoins.'},
+ {cat:'Fondamentaux',term:'Progression pédagogique',def:'Enchaînement ordonné des séquences, du simple au complexe et du connu vers l’inconnu.'},
+ {cat:'Fondamentaux',term:'Théorie de l’autodétermination',def:'Modèle motivationnel (Deci & Ryan) : l’engagement se nourrit d’autonomie, de sentiment de compétence et d’appartenance sociale.'},
+ {cat:'Méthodes',term:'Exposé interactif',def:'Apport structuré du formateur, entrecoupé de questions et d’échanges pour maintenir l’attention et vérifier la compréhension.'},
+ {cat:'Méthodes',term:'Démonstration',def:'Le formateur exécute un geste ou une procédure que l’apprenant observe puis reproduit.'},
+ {cat:'Méthodes',term:'Étude de cas',def:'Analyse d’une situation réelle ou réaliste pour développer le raisonnement et la prise de décision.'},
+ {cat:'Méthodes',term:'Travaux en sous-groupes',def:'Activité collaborative en petits groupes favorisant l’échange, la coopération et la production.'},
+ {cat:'Méthodes',term:'Jeu de rôle',def:'Simulation d’une interaction (ex. relation soignant-patient) pour s’entraîner aux compétences relationnelles.'},
+ {cat:'Méthodes',term:'Simulation',def:'Reproduction d’une situation professionnelle en environnement maîtrisé (ex. simulation en santé) pour s’entraîner sans risque pour le patient.'},
+ {cat:'Méthodes',term:'Chambre des erreurs',def:'Environnement scénarisé (ex. chambre de patient) truffé d’erreurs à repérer : outil ludique de sensibilisation à la sécurité des soins.'},
+ {cat:'Méthodes',term:'Débat mouvant',def:'Les participants se positionnent physiquement (pour/contre) face à une affirmation puis argumentent ; travaille les attitudes.'},
+ {cat:'Méthodes',term:'Théâtre-forum',def:'Saynète jouée puis rejouée avec l’intervention du public pour explorer des solutions ; utile sur les postures et les conflits.'},
+ {cat:'Méthodes',term:'Photolangage',def:'Choix d’images pour exprimer un ressenti ou une représentation ; brise-glace et outil de mise en réflexion.'},
+ {cat:'Méthodes',term:'Brainstorming',def:'Production collective d’idées en suspendant le jugement, pour faire émerger un maximum de solutions.'},
+ {cat:'Méthodes',term:'Retour d’expérience (RETEX)',def:'Analyse partagée d’une situation vécue pour en tirer des enseignements et améliorer les pratiques.'},
+ {cat:'Ludopédagogie',term:'Ludopédagogie',def:'Usage du jeu et de ses ressorts (défi, plaisir, coopération) au service d’objectifs pédagogiques sérieux.'},
+ {cat:'Ludopédagogie',term:'Gamification',def:'Application de mécaniques de jeu (points, badges, niveaux, classements) à un contexte non ludique pour stimuler l’engagement.'},
+ {cat:'Ludopédagogie',term:'Serious game',def:'Jeu conçu à des fins d’apprentissage, alliant scénario ludique et objectifs pédagogiques explicites.'},
+ {cat:'Ludopédagogie',term:'Escape game pédagogique',def:'Jeu d’évasion coopératif où résoudre des énigmes mobilise et évalue des compétences dans un temps limité.'},
+ {cat:'Ludopédagogie',term:'Murder party pédagogique',def:'Enquête scénarisée en équipe où les indices à analyser portent des contenus de formation.'},
+ {cat:'Ludopédagogie',term:'Quiz interactif',def:'Questionnaire ludique en temps réel (Wooclap, Kahoot) pour activer, vérifier ou consolider les connaissances.'},
+ {cat:'Ludopédagogie',term:'Jeu de cartes pédagogiques',def:'Cartes à manipuler (type Learning Battle Cards) pour explorer, trier ou associer des concepts et des méthodes.'},
+ {cat:'Évaluation',term:'Évaluation diagnostique',def:'Réalisée en amont pour situer le niveau initial et adapter la formation (ex. test de positionnement).'},
+ {cat:'Évaluation',term:'Évaluation formative',def:'En cours de formation, elle régule l’apprentissage sans note, par des retours permettant de progresser.'},
+ {cat:'Évaluation',term:'Évaluation sommative',def:'En fin de formation, elle atteste l’atteinte des objectifs (attestation, certification).'},
+ {cat:'Évaluation',term:'Modèle de Kirkpatrick',def:'Quatre niveaux d’évaluation d’une formation : réaction (satisfaction), apprentissages, comportements (transfert) et résultats (impact).'},
+ {cat:'Évaluation',term:'ROI / ROE',def:'Retour sur investissement (bénéfice financier) et retour sur attentes (bénéfices qualitatifs) d’une action de formation (modèle Phillips).'},
+ {cat:'Évaluation',term:'Test de positionnement',def:'Évaluation initiale des acquis pour orienter le parcours et, le cas échéant, constituer des groupes de niveau.'},
+ {cat:'Évaluation',term:'Portfolio',def:'Recueil organisé de preuves de compétences (productions, observations) servant à l’évaluation et au suivi.'},
+ {cat:'Outils',term:'Wooclap',def:'Plateforme d’interaction en direct (questions, votes, nuages de mots) pour dynamiser présentiel et distanciel.'},
+ {cat:'Outils',term:'Kahoot',def:'Outil de quiz ludique et compétitif en temps réel, apprécié pour l’ancrage et l’émulation de groupe.'},
+ {cat:'Outils',term:'Genially',def:'Outil de création de contenus interactifs et gamifiés (images cliquables, escape games, présentations animées).'},
+ {cat:'Outils',term:'Klaxoon / Beekast',def:'Plateformes d’animation collaborative (ateliers, brainstorming, votes) en présentiel comme à distance.'},
+ {cat:'Outils',term:'LMS (plateforme)',def:'Learning Management System : plateforme de diffusion, de suivi et de gestion des parcours de formation en ligne.'},
+ {cat:'Outils',term:'Mannequin de simulation',def:'Dispositif haute-fidélité reproduisant un patient pour l’entraînement aux gestes et à la gestion de situations critiques.'},
+ {cat:'Outils',term:'Cas clinique',def:'Situation patient réaliste servant de support au raisonnement clinique et à la mise en situation.'},
+ {cat:'Outils',term:'Grille d’observation',def:'Outil structuré permettant d’évaluer objectivement une pratique ou un comportement en situation.'},
+ {cat:'Outils',term:'Paperboard',def:'Tableau de conférence papier : support simple pour co-construire, afficher et garder trace des productions du groupe.'}
+];
+function normalize(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function hl(text,rawQ){var t=esc(text);if(!rawQ)return t;try{var re=new RegExp('('+rawQ.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return t.replace(re,'<mark>$1</mark>');}catch(_){return t;}}
+function renderGlossary(){
+  var wrap=document.getElementById('glossList');if(!wrap)return;
+  var raw=val('glossQ'),q=normalize(raw),cats=['Fondamentaux','Méthodes','Ludopédagogie','Évaluation','Outils'],html='',count=0;
+  cats.forEach(function(cat){
+    var items=GLOSSARY.filter(function(g){return g.cat===cat&&(q===''||normalize(g.term).indexOf(q)>=0||normalize(g.def).indexOf(q)>=0);});
+    if(!items.length)return;
+    html+='<div class="glossCat" style="color:'+CATCOL[cat]+'">'+cat+'</div>';
+    items.forEach(function(g){count++;html+='<div class="glossItem" style="border-left-color:'+CATCOL[cat]+'"><h4>'+hl(g.term,raw)+'</h4><p>'+hl(g.def,raw)+'</p></div>';});
+  });
+  if(count===0)html='<div class="glossEmpty">Aucun terme ne correspond à « '+esc(raw)+' ».</div>';
+  wrap.innerHTML=html;
+  document.getElementById('glossCount').textContent=q?(count+' terme'+(count>1?'s':'')+' trouvé'+(count>1?'s':'')):(GLOSSARY.length+' termes au total');
+}
+
 update();
 renderScenario();
+renderGlossary();
 </script>
 </body>
 </html>
