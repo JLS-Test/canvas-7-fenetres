@@ -525,8 +525,8 @@ function fname(ext){
 }
 function buildTXT(){
   var d=getData(),L=[];
-  L.push('CANVAS DES 7 FENÊTRES — PROJET DE FORMATION');
-  L.push('='.repeat(52));L.push('');
+  L.push('CONCEVOIR ET ANIMER UNE FORMATION LUDOPÉDAGOGIQUE AVEC DES OUTILS IMMERSIFS');
+  L.push('='.repeat(74));L.push('');
   L.push('■ EN-TÊTE — CADRAGE');
   HEADER_FIELDS.forEach(function(f){L.push('  • '+f.label+' : '+(d.header[f.key].value||'—'));});
   L.push('');
@@ -566,11 +566,11 @@ function rowsForTable(){
 function buildHTMLdoc(forWord){
   var d=getData();
   var head=forWord
-   ? '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Projet de formation</title></head>'
-   : '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Projet de formation — 7 Fenêtres</title></head>';
+   ? '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Concevoir et animer une formation ludopédagogique avec des outils immersifs</title></head>'
+   : '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Concevoir et animer une formation ludopédagogique avec des outils immersifs</title></head>';
   var css='<style>body{font-family:Calibri,Arial,sans-serif;color:#222;max-width:900px;margin:20px auto;padding:0 16px;line-height:1.5}h1{color:#8E2D5A;font-size:22px}h2{color:#B4472E;border-bottom:2px solid #eee;padding-bottom:4px;margin-top:26px}h3{margin:14px 0 4px}table{border-collapse:collapse;width:100%;margin:8px 0 18px}td,th{border:1px solid #ccc;padding:7px 9px;font-size:14px;vertical-align:top}th{background:#faf3f7;text-align:left;width:34%}.q{font-style:italic;color:#666;font-size:13px}.foot{margin-top:30px;color:#888;font-size:12px;border-top:1px solid #eee;padding-top:10px}</style>';
   var b=head+'<body>'+css;
-  b+='<h1>Canvas des 7 Fenêtres — Projet de formation</h1>';
+  b+='<h1>Concevoir et animer une formation ludopédagogique avec des outils immersifs</h1>';
   b+='<h2>En-tête — Cadrage</h2><table>';
   HEADER_FIELDS.forEach(function(f){b+='<tr><th>'+f.label+'</th><td>'+esc(d.header[f.key].value)+'</td></tr>';});
   b+='</table>';
@@ -602,6 +602,7 @@ function buildHTMLdoc(forWord){
 function buildExcel(){
   var rows=rowsForTable();
   var t='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>';
+  t+='<table border="0"><tr><td style="font-size:15px;font-weight:bold;color:#8E2D5A">Concevoir et animer une formation ludopédagogique avec des outils immersifs</td></tr></table><br>';
   t+='<table border="1"><tr><td colspan="4" style="background:#8E2D5A;color:#fff;font-weight:bold">RAISONNEMENT PÉDAGOGIQUE — 7 FENÊTRES</td></tr>';
   rows.forEach(function(r,i){
     t+='<tr>'+r.map(function(c){
