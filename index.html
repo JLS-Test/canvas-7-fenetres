@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canvas 7 Fenêtres — Concevoir un projet de formation</title>
+<style>
+  :root{
+    --magenta:#8E2D5A; --amber:#E8A33D; --orange:#D96C2C; --terra:#B4472E;
+    --ink:#2b2b33; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f2f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:linear-gradient(135deg,#6d3b73 0%,#8E2D5A 100%);padding:24px}
+  .wrap{max-width:1080px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;
+        box-shadow:0 20px 60px rgba(0,0,0,.28)}
+  header.top{padding:26px 30px;background:linear-gradient(90deg,#3a2a3f,#5a2d4d);color:#fff}
+  header.top h1{margin:0;font-size:23px;letter-spacing:.2px}
+  header.top p{margin:6px 0 0;color:#e9d6e4;font-size:14px;max-width:760px;line-height:1.5}
+  .badge{display:inline-block;background:#E8A33D;color:#3a2a3f;font-weight:700;font-size:11px;
+         padding:3px 9px;border-radius:20px;margin-bottom:10px;letter-spacing:.4px}
+  main{padding:26px 30px}
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.full{grid-column:1/-1}
+  label{font-size:12.5px;font-weight:600;color:#444}
+  input,select,textarea{font:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line);
+        border-radius:9px;background:#fff;color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--magenta);
+        box-shadow:0 0 0 3px rgba(142,45,90,.12)}
+  textarea{resize:vertical;min-height:64px}
+  select{cursor:pointer}
+  .headerCard{background:#faf3f7;border:1px solid #f0dbe7;border-radius:14px;padding:18px;margin-bottom:24px}
+  .headerCard .capTitle{color:var(--magenta)}
+  .phaseBand{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+  .phaseBand .bar{height:30px;border-radius:8px;padding:0 14px;display:flex;align-items:center;
+        color:#fff;font-weight:800;font-size:13px;letter-spacing:.6px}
+  .phaseBand small{color:var(--muted);font-size:12px}
+  .windows{display:grid;gap:14px}
+  .win{border:1px solid var(--line);border-left:6px solid var(--amber);border-radius:12px;padding:16px 18px;background:#fff}
+  .win .whead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .win .num{font-size:12px;font-weight:800;color:#fff;background:var(--amber);border-radius:50%;
+        width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .win h3{margin:0;font-size:15px;letter-spacing:.3px}
+  .win .subt{color:var(--muted);font-size:12.5px}
+  .win .q{font-size:13px;color:#555;font-style:italic;margin:9px 0 13px;line-height:1.45}
+  .win .selrow{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+  .filledDot{width:9px;height:9px;border-radius:50%;background:#d1d5db;margin-left:auto}
+  .filledDot.on{background:#22c55e}
+  .progress{margin:22px 0 4px}
+  .progress .track{height:10px;background:#eee;border-radius:20px;overflow:hidden}
+  .progress .fill{height:100%;width:0;background:linear-gradient(90deg,#E8A33D,#D96C2C,#B4472E);
+        transition:width .3s}
+  .progress .lbl{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .exportBar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);
+        padding:16px 30px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:24px -30px -26px}
+  .btn{border:0;border-radius:10px;padding:10px 15px;font-size:13.5px;font-weight:700;cursor:pointer;
+        display:inline-flex;align-items:center;gap:7px;transition:transform .08s,filter .15s}
+  .btn:hover{filter:brightness(.96);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.txt{background:#eef2ff;color:#3730a3}
+  .btn.word{background:#e6efff;color:#1e40af}
+  .btn.xls{background:#e7f6ec;color:#15803d}
+  .btn.html{background:#fdeee3;color:#b4472e}
+  .btn.json{background:#efe9f7;color:#6d3b73}
+  .btn.reset{background:#f3f4f6;color:#6b7280;margin-left:auto}
+  .btn.copy{background:#f5e9f0;color:#8E2D5A}
+  .toast{font-size:13px;font-weight:700;color:#15803d;background:#e7f6ec;padding:6px 12px;border-radius:20px}
+  footer.sig{padding:16px 30px;background:#f8f7fb;color:var(--muted);font-size:12.5px;text-align:center;border-top:1px solid var(--line)}
+  footer.sig strong{color:#444}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:14px;max-width:680px;width:100%;overflow:hidden}
+  .modal .mh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal .mh h3{margin:0;font-size:15px}
+  .modal .mh button{background:none;border:0;font-size:24px;cursor:pointer;color:#888}
+  .modal textarea{margin:14px 18px;width:calc(100% - 36px);height:280px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  /* tabs */
+  .tabs{display:flex;gap:4px;padding:0 30px;background:#3a2a3f}
+  .tab{border:0;background:transparent;color:#d9c7d3;padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent}
+  .tab.active{color:#fff;border-bottom-color:#E8A33D}
+  .tab:hover{color:#fff}
+  .tabpane{display:none}
+  .tabpane.active{display:block}
+  /* scénario */
+  .scnTop{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;background:#faf3f7;border:1px solid #f0dbe7;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+  .scnTop .field{min-width:150px}
+  .gaugeWrap{min-width:240px;flex:1}
+  .gaugeBar{height:12px;background:#eee;border-radius:20px;overflow:hidden}
+  .gaugeFill{height:100%;width:0;background:#22c55e;transition:width .3s,background .3s}
+  .mini{font-size:12px;color:var(--muted);margin-top:5px}
+  .addbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+  .addbar button{border:1.5px dashed #d0a9bf;background:#fff;color:#8E2D5A;border-radius:9px;padding:9px 13px;font-weight:700;font-size:13px;cursor:pointer}
+  .addbar button:hover{background:#faf3f7}
+  .seqCard{border:1px solid var(--line);border-left:6px solid #D96C2C;border-radius:12px;padding:14px 16px;background:#fff;margin-bottom:10px}
+  .seqCard.pause{border-left-color:#9aa0a6;background:#fafafa}
+  .seqCard.inter{border-left-color:#8E2D5A;background:#faf3f7}
+  .seqCard .rowtop{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .seqCard .time{font-weight:800;color:#B4472E;font-size:12.5px;font-variant-numeric:tabular-nums;background:#fdeee3;padding:4px 9px;border-radius:6px;white-space:nowrap}
+  .seqCard .handle{margin-left:auto;display:flex;gap:5px}
+  .seqCard .handle button{border:1px solid var(--line);background:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:12px;color:#666}
+  .seqCard .handle button:hover{background:#f3f4f6}
+  .seqGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .dayHead{background:linear-gradient(90deg,#5a2d4d,#8E2D5A);color:#fff;padding:9px 14px;border-radius:9px;font-weight:800;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  @media(max-width:640px){.grid,.win .selrow,.seqGrid{grid-template-columns:1fr}body{padding:10px}main{padding:20px 16px}.exportBar{padding:14px 16px;margin:24px -16px -20px}.tabs{padding:0 10px}.tab{padding:12px 10px;font-size:12.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="badge">INGÉNIERIE PÉDAGOGIQUE · LUDOPÉDAGOGIE</span>
+    <h1>Canvas des 7 Fenêtres — Concevoir un projet de formation</h1>
+    <p>Trame de conception inspirée du modèle des « 7 Windows of Instructional Design ». Renseignez l'en-tête puis
+       parcourez les 7 fenêtres de gauche à droite. Les menus déroulants proposent des modalités pédagogiques —
+       avec un accent sur la ludopédagogie — pour vous approprier les fondamentaux. Téléchargez votre projet en TXT, Word, Excel ou HTML.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" id="tabbtn1" onclick="switchTab(1)">① Raisonnement pédagogique</button>
+    <button class="tab" id="tabbtn2" onclick="switchTab(2)">② Scénario &amp; programme</button>
+  </nav>
+
+  <main>
+    <div id="tab1" class="tabpane active">
+    <!-- EN-TÊTE -->
+    <div class="headerCard">
+      <h2 class="sec capTitle">En-tête du projet — Cadrage</h2>
+      <div class="grid" id="headerGrid"></div>
+    </div>
+
+    <!-- PHASES + FENÊTRES -->
+    <div id="phases"></div>
+
+    <!-- PROGRESSION -->
+    <div class="progress">
+      <div class="track"><div class="fill" id="progFill"></div></div>
+      <div class="lbl" id="progLbl">0 / 7 fenêtres complétées</div>
+    </div>
+    </div><!-- /tab1 -->
+
+    <div id="tab2" class="tabpane">
+      <h2 class="sec" style="color:#B4472E">Scénario pédagogique — Programme séquencé</h2>
+      <p style="font-style:italic;color:#666;margin:-4px 0 16px;font-size:13.5px;line-height:1.5">Séquencez votre formation par blocs d'environ 90 minutes (le rythme d'attention optimal). Choisissez un format, générez une trame type puis ajustez chaque séquence — durée, objectifs, contenus, méthode, outils. Ajoutez une <strong>intersession</strong> pour ancrer les bonnes pratiques sur le terrain entre deux journées.</p>
+
+      <div class="scnTop">
+        <div class="field"><label>Format souhaité</label>
+          <select id="scnFormat" onchange="renderScenario()"></select></div>
+        <div class="field" style="max-width:130px"><label>Début de journée</label>
+          <input id="scnStart" value="09:00" oninput="renderScenario()"></div>
+        <div class="gaugeWrap">
+          <label style="font-size:12.5px;font-weight:600;color:#444">Temps pédagogique vs cible</label>
+          <div class="gaugeBar"><div class="gaugeFill" id="scnGauge"></div></div>
+          <div class="mini" id="scnGaugeLbl">—</div></div>
+        <button class="btn" style="background:#8E2D5A;color:#fff" onclick="generateTemplate()">✨ Générer une trame type</button>
+      </div>
+
+      <div class="addbar">
+        <button onclick="addItem('seq')">＋ Séquence</button>
+        <button onclick="addItem('pause')">＋ Pause</button>
+        <button onclick="addItem('inter')">＋ Intersession</button>
+        <button onclick="addItem('day')">＋ Séparateur de jour</button>
+        <button onclick="clearScenario()" style="border-color:#ddd;color:#999">✕ Vider</button>
+      </div>
+
+      <div id="scnList"></div>
+      <datalist id="outilsList"></datalist>
+    </div><!-- /tab2 -->
+  </main>
+
+  <div class="exportBar">
+    <button class="btn copy" onclick="copyReport()">📋 Copier</button>
+    <button class="btn txt" onclick="exportTXT()">📄 TXT</button>
+    <button class="btn word" onclick="exportWord()">📝 Word</button>
+    <button class="btn xls" onclick="exportExcel()">📊 Excel</button>
+    <button class="btn html" onclick="exportHTML()">🌐 HTML</button>
+    <button class="btn json" onclick="exportJSON()">💾 Sauver</button>
+    <label class="btn json" style="cursor:pointer;margin:0">📂 Reprendre<input type="file" accept="application/json,.json" onchange="importJSON(this)" style="display:none"></label>
+    <span class="toast" id="toast" style="display:none"></span>
+    <button class="btn reset" onclick="resetAll()">↺ Réinitialiser</button>
+  </div>
+
+  <footer class="sig">
+    <strong>Jean-Luc STANISLAS</strong> — Membre expert HAS, Programme PACTE ·
+    Trame pédagogique « 7 Fenêtres de l'ingénierie de formation » · Usage formation / conception.
+  </footer>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="mh"><h3>📋 Copier le contenu</h3><button onclick="closeModal()">×</button></div>
+    <p style="margin:12px 18px 0;font-size:13px;color:#666">Sélectionnez tout (Ctrl/Cmd+A) puis copiez (Ctrl/Cmd+C) :</p>
+    <textarea id="modalTA" readonly onclick="this.select()"></textarea>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+var HEADER_FIELDS = [
+  {key:'projet',   label:'Intitulé du projet de formation', type:'text',     ph:'Ex : Prévenir les erreurs médicamenteuses en gériatrie'},
+  {key:'client',   label:'Commanditaire / établissement',   type:'text',     ph:'Ex : CH de … / Direction des soins / GHT'},
+  {key:'budget',   label:'Budget',                          type:'select',   options:['< 5 000 €','5 000 – 15 000 €','15 000 – 40 000 €','> 40 000 €','Plan de formation / ANFH','À définir']},
+  {key:'public',   label:'Public cible',                    type:'select',   options:['IDE / soignants','Aides-soignants','Cadres de santé','Médecins','Équipe pluriprofessionnelle','Personnel médico-social (EHPAD/HAD)','Formateurs / tuteurs','Direction / encadrement']},
+  {key:'effectif', label:'Effectif',                        type:'select',   options:['1 à 8 (petit groupe)','9 à 15','16 à 30','31 à 50','50+ (grand groupe)']},
+  {key:'duree',    label:'Durée / format',                  type:'select',   options:['Demi-journée','1 jour','2 jours','Parcours multimodal','Distanciel / e-learning','Blended (présentiel + distanciel)']},
+  {key:'objectifs',label:'Objectif(s) pédagogique(s) général(aux)', type:'textarea', ph:'À l’issue de la formation, l’apprenant sera capable de…'},
+  {key:'kpi',      label:'Indicateurs de réussite (KPI)',   type:'textarea', ph:'Ex : taux de conformité, satisfaction ≥ 4/5, réduction des événements indésirables…'},
+  {key:'besoins',  label:'Besoins & facteurs critiques',    type:'textarea', ph:'Contraintes organisationnelles, réglementaires (HAS/certification), délais, disponibilité des équipes…', full:true}
+];
+
+var PHASE_COLORS = {'PRÉPARATION':'var(--amber)','DÉLIVRANCE':'var(--orange)','CONCLUSION':'var(--terra)'};
+var PHASE_HEX    = {'PRÉPARATION':'#E8A33D','DÉLIVRANCE':'#D96C2C','CONCLUSION':'#B4472E'};
+var PHASE_TAG    = {'PRÉPARATION':'Poser les fondations : diagnostiquer et engager',
+                    'DÉLIVRANCE':'Faire apprendre : savoirs, savoir-faire, savoir-être',
+                    'CONCLUSION':'Ancrer et mesurer : transfert et évaluation'};
+
+var WINDOWS = [
+ {id:'analysis', num:1, phase:'PRÉPARATION', title:'ANALYSE', subtitle:'Analyse des besoins',
+  q:'Quelles méthodes utiliser pour identifier et hiérarchiser le besoin réel et le niveau de départ des apprenants ?',
+  selects:[
+   {key:'diag', label:'Méthode de diagnostic', options:['Entretiens individuels','Questionnaire pré-formation','Analyse de l’activité réelle','Focus group','Audit de pratiques','Analyse des événements indésirables','Référentiel de compétences','Test de positionnement gamifié']},
+   {key:'maturite', label:'Niveau de maturité du public', options:['Novice','Débutant','Intermédiaire','Avancé','Expert / hétérogène']}
+  ]},
+ {id:'awareness', num:2, phase:'PRÉPARATION', title:'PRISE DE CONSCIENCE', subtitle:'Motivation & engagement',
+  q:'Comment susciter l’engagement et la prise de conscience du besoin de se former ?',
+  selects:[
+   {key:'levier', label:'Levier d’engagement ludopédagogique', options:['Ice-breaker ludique','Photolangage','Quiz brise-glace (Wooclap/Kahoot)','Storytelling / cas déclencheur','Chambre des erreurs','Défi d’équipe','Vidéo immersive','Métaphore visuelle']},
+   {key:'ressort', label:'Ressort motivationnel (autodétermination)', options:['Autonomie','Sentiment de compétence','Appartenance sociale','Sens / utilité perçue']}
+  ]},
+ {id:'knowledge', num:3, phase:'DÉLIVRANCE', title:'CONNAISSANCES', subtitle:'Transfert de savoirs',
+  q:'Quel éventail de savoirs l’apprenant doit-il acquérir pour atteindre l’objectif ?',
+  selects:[
+   {key:'modalite', label:'Modalité d’apport', options:['Classe inversée','Micro-learning','Capsule vidéo','Serious game narratif','Quiz interactif (Wooclap/Kahoot)','Jeu de cartes de connaissances','Podcast','Fiche mémo / infographie']},
+   {key:'bloom', label:'Niveau cognitif visé (Bloom)', options:['Mémoriser','Comprendre','Appliquer','Analyser','Évaluer','Créer']}
+  ]},
+ {id:'skills', num:4, phase:'DÉLIVRANCE', title:'COMPÉTENCES', subtitle:'Savoir-faire',
+  q:'Quels savoir-faire développer et comment garantir un entraînement suffisant ?',
+  selects:[
+   {key:'entrainement', label:'Modalité d’entraînement', options:['Simulation haute-fidélité','Jeu de rôle','Serious game procédural','Atelier pratique gamifié','Escape game technique','Étude de cas','Peer-learning / apprentissage par les pairs','Débriefing structuré']},
+   {key:'typecomp', label:'Type de compétence', options:['Technique / geste','Relationnelle','Organisationnelle','Décisionnelle','Numérique']}
+  ]},
+ {id:'attitudes', num:5, phase:'DÉLIVRANCE', title:'ATTITUDES', subtitle:'Postures & comportements',
+  q:'Quelles attitudes et postures professionnelles faire évoluer ?',
+  selects:[
+   {key:'levieratt', label:'Levier attitudinal ludique', options:['Débat mouvant','Jeu de rôle inversé','Murder party éthique','Théâtre-forum','Dilemme moral gamifié','Photolangage','Cercle de parole','Immersion « vis-ma-vie »']},
+   {key:'dimension', label:'Dimension visée', options:['Éthique / déontologie','Coopération / travail d’équipe','Culture sécurité','Bienveillance / relation de soin','Réflexivité']}
+  ]},
+ {id:'implementation', num:6, phase:'CONCLUSION', title:'MISE EN ŒUVRE', subtitle:'Transfert sur le terrain',
+  q:'Comment ancrer durablement les nouvelles compétences dans la pratique quotidienne ?',
+  selects:[
+   {key:'ancrage', label:'Dispositif d’ancrage', options:['Plan d’action individuel','Défi post-formation (challenge)','Communauté de pratique','Gamification continue (badges/points)','Rappels espacés (spaced repetition)','Tutorat / mentorat','Kit terrain','Retour d’expérience gamifié']},
+   {key:'horizon', label:'Horizon de transfert', options:['Immédiat (J+0)','Court terme (S+1 à M+1)','Moyen terme (M+3)','Long terme (M+6 et +)']}
+  ]},
+ {id:'evaluation', num:7, phase:'CONCLUSION', title:'ÉVALUATION', subtitle:'Mesure des résultats',
+  q:'Comment mesurer les acquis, le transfert et l’impact (ROI/ROE) de la formation ?',
+  selects:[
+   {key:'niveau', label:'Niveau d’évaluation (Kirkpatrick)', options:['N1 – Réaction / satisfaction','N2 – Apprentissages','N3 – Comportements / transfert','N4 – Résultats / impact','ROI / ROE (Phillips)']},
+   {key:'outil', label:'Outil de mesure ludique', options:['Quiz post-formation','Battle quiz par équipes','Auto-évaluation gamifiée','Grille d’observation terrain','Indicateurs qualité HAS','Enquête de satisfaction','Portfolio de preuves']}
+  ]}
+];
+
+/* ================= RENDER ================= */
+function opt(v){return '<option value="'+v.replace(/"/g,'&quot;')+'">'+v+'</option>';}
+function esc(s){return (s||'').replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+(function renderHeader(){
+  var g=document.getElementById('headerGrid'),h='';
+  HEADER_FIELDS.forEach(function(f){
+    var cls='field'+(f.full||f.type==='textarea'?' full':'');
+    var ctrl;
+    if(f.type==='select'){ctrl='<select id="h_'+f.key+'" onchange="update()"><option value="">— choisir —</option>'+f.options.map(opt).join('')+'</select>';}
+    else if(f.type==='textarea'){ctrl='<textarea id="h_'+f.key+'" placeholder="'+esc(f.ph)+'" oninput="update()"></textarea>';}
+    else{ctrl='<input id="h_'+f.key+'" placeholder="'+esc(f.ph)+'" oninput="update()">';}
+    h+='<div class="'+cls+'"><label>'+f.label+'</label>'+ctrl+'</div>';
+  });
+  g.innerHTML=h;
+})();
+
+(function renderPhases(){
+  var root=document.getElementById('phases'),html='',order=['PRÉPARATION','DÉLIVRANCE','CONCLUSION'];
+  order.forEach(function(ph){
+    html+='<div class="phaseBand"><span class="bar" style="background:'+PHASE_HEX[ph]+'">'+ph+'</span><small>'+PHASE_TAG[ph]+'</small></div>';
+    html+='<div class="windows">';
+    WINDOWS.filter(function(w){return w.phase===ph;}).forEach(function(w){
+      var sels=w.selects.map(function(s){
+        return '<div class="field"><label>'+s.label+'</label><select id="w_'+w.id+'_'+s.key+'" onchange="update()"><option value="">— choisir —</option>'+s.options.map(opt).join('')+'</select></div>';
+      }).join('');
+      html+='<div class="win" id="win_'+w.id+'" style="border-left-color:'+PHASE_HEX[ph]+'">'
+        +'<div class="whead"><span class="num" style="background:'+PHASE_HEX[ph]+'">'+w.num+'</span>'
+        +'<h3>'+w.title+'</h3><span class="subt">· '+w.subtitle+'</span>'
+        +'<span class="filledDot" id="dot_'+w.id+'"></span></div>'
+        +'<div class="q">'+w.q+'</div>'
+        +'<div class="selrow">'+sels+'</div>'
+        +'<div class="field"><label>Précisions / scénario pédagogique</label>'
+        +'<textarea id="n_'+w.id+'" placeholder="Décrivez concrètement l’activité, le déroulé, les supports, la ludopédagogie mobilisée…" oninput="update()"></textarea></div>'
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  root.innerHTML=html;
+})();
+
+/* ================= SCÉNARIO PÉDAGOGIQUE ================= */
+var METHODES=['Exposé interactif','Démonstration','Étude de cas','Travaux en sous-groupes','Jeu de rôle','Simulation','Serious game','Escape game pédagogique','Quiz interactif (Wooclap/Kahoot)','Jeu de cartes pédagogiques','Débat mouvant','Théâtre-forum','Photolangage','Brainstorming','Classe inversée','Chambre des erreurs','Retour d’expérience','Plan d’action individuel'];
+var OUTILS=['Paperboard','Vidéoprojecteur','Wooclap','Kahoot','Genially','Klaxoon / Beekast','Cartes pédagogiques','Plateau de jeu','Mannequin de simulation','Cas clinique','Vidéo','Fiches mémo','Plateforme LMS','Grille d’observation','Quiz papier'];
+var DUREES=[15,30,45,60,75,90,120];
+var FORMATS={'1h':{label:'1 heure',target:60},'2h':{label:'2 heures',target:120},'3h':{label:'3 heures',target:180},'1j':{label:'1 jour',target:360},'2j':{label:'2 jours',target:720},'3j':{label:'3 jours',target:1080}};
+var scenario=[];var seqId=0;
+
+function escA(s){return esc(s).replace(/"/g,'&quot;');}
+function newSeq(kind,d){d=d||{};var o={id:++seqId,kind:kind,titre:'',dureeMin:kind==='pause'?15:90,dureeText:'3 à 4 semaines',objectifs:'',contenus:'',methode:'',outils:'',dayLabel:''};for(var k in d)o[k]=d[k];return o;}
+
+(function initScn(){
+  var fs=document.getElementById('scnFormat'),h='';
+  for(var k in FORMATS)h+='<option value="'+k+'">'+FORMATS[k].label+'</option>';
+  fs.innerHTML=h;fs.value='1j';
+  document.getElementById('outilsList').innerHTML=OUTILS.map(function(o){return '<option value="'+escA(o)+'">';}).join('');
+})();
+
+function switchTab(n){
+  document.getElementById('tab1').className='tabpane'+(n===1?' active':'');
+  document.getElementById('tab2').className='tabpane'+(n===2?' active':'');
+  document.getElementById('tabbtn1').className='tab'+(n===1?' active':'');
+  document.getElementById('tabbtn2').className='tab'+(n===2?' active':'');
+}
+function parseHM(s){var m=/^(\d{1,2}):(\d{2})$/.exec((s||'').trim());if(!m)return 540;return (+m[1])*60+(+m[2]);}
+function fmtHM(x){x=((x%1440)+1440)%1440;var h=Math.floor(x/60),m=x%60;return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+function fmtDur(m){if(!m)return '0 min';var h=Math.floor(m/60),mn=m%60,s=(h?h+' h':'');if(mn)s+=(h?' ':'')+mn+' min';return s.trim();}
+function findSeq(id){for(var i=0;i<scenario.length;i++)if(scenario[i].id===id)return scenario[i];return null;}
+function setF(id,f,v){var it=findSeq(id);if(it){it[f]=v;refreshGauge();}}
+function setDur(id,v){var it=findSeq(id);if(it){it.dureeMin=+v;renderScenario();}}
+function addItem(kind){
+  var extra=kind==='inter'?{titre:'Intersession — mise en œuvre terrain',objectifs:'Ancrer les bonnes pratiques sur le terrain',contenus:'Expérimentation encadrée, recueil de preuves, préparation du RETEX'}
+    :(kind==='day'?{dayLabel:'Jour '+(scenario.filter(function(x){return x.kind==='day';}).length+1)}:{});
+  scenario.push(newSeq(kind,extra));renderScenario();
+}
+function delItem(id){scenario=scenario.filter(function(x){return x.id!==id;});renderScenario();}
+function moveItem(id,dir){var i=scenario.findIndex(function(x){return x.id===id;}),j=i+dir;if(i<0||j<0||j>=scenario.length)return;var t=scenario[i];scenario[i]=scenario[j];scenario[j]=t;renderScenario();}
+function clearScenario(){if(scenario.length&&!confirm('Vider le scénario ?'))return;scenario=[];renderScenario();}
+
+function computeTimes(){
+  var start=parseHM(val('scnStart')),clock=start,out=[];
+  scenario.forEach(function(it){
+    if(it.kind==='day'){clock=start;out.push({it:it});}
+    else if(it.kind==='inter'){out.push({it:it});}
+    else{var s=clock,e=clock+(+it.dureeMin||0);out.push({it:it,s:fmtHM(s),e:fmtHM(e)});clock=e;}
+  });
+  return out;
+}
+function durSelect(id,v){
+  var opts=DUREES.slice();if(opts.indexOf(v)<0)opts.push(v);opts.sort(function(a,b){return a-b;});
+  return '<select onchange="setDur('+id+',this.value)">'+opts.map(function(o){return '<option value="'+o+'"'+(o===v?' selected':'')+'>'+o+' min</option>';}).join('')+'</select>';
+}
+function methSelect(id,v){
+  return '<select onchange="setF('+id+',&#39;methode&#39;,this.value)"><option value="">— méthode —</option>'+METHODES.map(function(m){return '<option'+(m===v?' selected':'')+'>'+m+'</option>';}).join('')+'</select>';
+}
+function handleBtns(id){return '<div class="handle"><button title="Monter" onclick="moveItem('+id+',-1)">▲</button><button title="Descendre" onclick="moveItem('+id+',1)">▼</button><button title="Supprimer" onclick="delItem('+id+')">✕</button></div>';}
+
+function renderScenario(){
+  var wrap=document.getElementById('scnList');if(!wrap)return;
+  var rows=computeTimes(),html='';
+  if(scenario.length===0){
+    html='<div style="text-align:center;color:#9aa0a6;padding:34px;border:1.5px dashed #e5e7eb;border-radius:12px">Aucune séquence. Choisissez un format et cliquez « ✨ Générer une trame type », ou ajoutez des blocs ci-dessus.</div>';
+  }
+  rows.forEach(function(r){
+    var it=r.it,id=it.id;
+    if(it.kind==='day'){
+      html+='<div class="dayHead"><input value="'+escA(it.dayLabel)+'" oninput="setF('+id+',&#39;dayLabel&#39;,this.value)" style="background:transparent;border:0;color:#fff;font-weight:800;font-size:15px;width:70%" placeholder="Jour"><button onclick="delItem('+id+')" style="background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer">✕</button></div>';
+      return;
+    }
+    if(it.kind==='inter'){
+      html+='<div class="seqCard inter"><div class="rowtop"><span class="time" style="background:#f5e9f0;color:#8E2D5A">⟲ INTERSESSION</span>'
+        +'<input style="flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px" value="'+escA(it.titre)+'" oninput="setF('+id+',&#39;titre&#39;,this.value)" placeholder="Intersession — mise en œuvre terrain">'
+        +handleBtns(id)+'</div>'
+        +'<div class="seqGrid"><div class="field"><label>Durée (période)</label><input value="'+escA(it.dureeText)+'" oninput="setF('+id+',&#39;dureeText&#39;,this.value)" placeholder="Ex : 3 à 4 semaines"></div>'
+        +'<div class="field"><label>Objectif d’ancrage</label><input value="'+escA(it.objectifs)+'" oninput="setF('+id+',&#39;objectifs&#39;,this.value)" placeholder="Ancrer les bonnes pratiques…"></div>'
+        +'<div class="field full"><label>Activité terrain / travail intersession</label><textarea oninput="setF('+id+',&#39;contenus&#39;,this.value)" placeholder="Plan d’action, expérimentation, recueil de preuves, RETEX…">'+esc(it.contenus)+'</textarea></div></div></div>';
+      return;
+    }
+    var isPause=it.kind==='pause';
+    html+='<div class="seqCard'+(isPause?' pause':'')+'"><div class="rowtop">'
+      +'<span class="time">'+r.s+'–'+r.e+'</span>'
+      +'<input style="flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px" value="'+escA(it.titre)+'" oninput="setF('+id+',&#39;titre&#39;,this.value)" placeholder="'+(isPause?'Pause / Déjeuner':'Titre de la séquence')+'">'
+      +handleBtns(id)+'</div>';
+    if(isPause){
+      html+='<div class="seqGrid"><div class="field"><label>Durée</label>'+durSelect(id,it.dureeMin)+'</div></div>';
+    }else{
+      html+='<div class="seqGrid">'
+        +'<div class="field"><label>Durée</label>'+durSelect(id,it.dureeMin)+'</div>'
+        +'<div class="field"><label>Méthode pédagogique</label>'+methSelect(id,it.methode)+'</div>'
+        +'<div class="field full"><label>Objectifs de la séquence</label><textarea oninput="setF('+id+',&#39;objectifs&#39;,this.value)" placeholder="Ce que l’apprenant saura faire à l’issue…">'+esc(it.objectifs)+'</textarea></div>'
+        +'<div class="field"><label>Contenus</label><textarea oninput="setF('+id+',&#39;contenus&#39;,this.value)" placeholder="Points clés abordés…">'+esc(it.contenus)+'</textarea></div>'
+        +'<div class="field"><label>Outils / supports</label><input list="outilsList" value="'+escA(it.outils)+'" oninput="setF('+id+',&#39;outils&#39;,this.value)" placeholder="Wooclap, cartes, cas clinique…"></div>'
+        +'</div>';
+    }
+    html+='</div>';
+  });
+  wrap.innerHTML=html;
+  refreshGauge();
+}
+function refreshGauge(){
+  var teach=0,ampl=0;
+  scenario.forEach(function(it){if(it.kind==='seq'){teach+=+it.dureeMin||0;ampl+=+it.dureeMin||0;}else if(it.kind==='pause'){ampl+=+it.dureeMin||0;}});
+  var fmt=val('scnFormat')||'1j',target=(FORMATS[fmt]||{target:360}).target;
+  var g=document.getElementById('scnGauge'),l=document.getElementById('scnGaugeLbl');if(!g)return;
+  var ratio=target?teach/target:0,color=(ratio>=0.9&&ratio<=1.1)?'#22c55e':(ratio>=0.75&&ratio<=1.25?'#E8A33D':'#ef4444');
+  g.style.width=Math.min(100,ratio*100)+'%';g.style.background=color;
+  l.innerHTML=fmtDur(teach)+' de pédagogie / cible '+fmtDur(target)+' · amplitude totale (pauses incluses) '+fmtDur(ampl);
+}
+function generateTemplate(){
+  if(scenario.length&&!confirm('Remplacer le scénario actuel par une trame type ?'))return;
+  var fmt=val('scnFormat')||'1j';scenario=[];seqId=0;
+  var day=function(){return [
+    newSeq('seq',{titre:'Accueil, attentes & ice-breaker',dureeMin:30,objectifs:'Créer le groupe, recueillir les attentes',methode:'Photolangage',outils:'Paperboard'}),
+    newSeq('seq',{titre:'Module 1 — Apports fondamentaux',dureeMin:90,objectifs:'Acquérir les savoirs clés',methode:'Exposé interactif',outils:'Wooclap'}),
+    newSeq('pause',{titre:'Pause',dureeMin:15}),
+    newSeq('seq',{titre:'Module 2 — Atelier ludopédagogique',dureeMin:75,objectifs:'Manipuler les concepts en équipe',methode:'Serious game',outils:'Cartes pédagogiques'}),
+    newSeq('pause',{titre:'Déjeuner',dureeMin:60}),
+    newSeq('seq',{titre:'Module 3 — Mise en situation',dureeMin:90,objectifs:'Transférer en contexte réel',methode:'Simulation',outils:'Cas clinique'}),
+    newSeq('pause',{titre:'Pause',dureeMin:15}),
+    newSeq('seq',{titre:'Module 4 — Entraînement & pratique',dureeMin:75,objectifs:'Consolider les savoir-faire',methode:'Jeu de rôle',outils:'Grille d’observation'}),
+    newSeq('seq',{titre:'Synthèse, quiz bilan & plan d’action',dureeMin:30,objectifs:'Évaluer et engager le transfert',methode:'Quiz interactif (Wooclap/Kahoot)',outils:'Kahoot'})
+  ];};
+  var inter=function(){return newSeq('inter',{titre:'Intersession — mise en œuvre terrain',dureeText:'3 à 4 semaines',objectifs:'Ancrer les bonnes pratiques',contenus:'Plan d’action individuel appliqué en situation réelle, recueil de preuves, préparation du RETEX pour la journée suivante'});};
+  var push=function(a){a.forEach(function(x){scenario.push(x);});};
+  if(fmt==='1h'){push([
+    newSeq('seq',{titre:'Accueil & objectifs',dureeMin:15,methode:'Exposé interactif',outils:'Paperboard'}),
+    newSeq('seq',{titre:'Apport interactif + quiz',dureeMin:30,objectifs:'Acquérir le message clé',methode:'Quiz interactif (Wooclap/Kahoot)',outils:'Wooclap'}),
+    newSeq('seq',{titre:'Synthèse & plan d’action',dureeMin:15,methode:'Retour d’expérience'})]);}
+  else if(fmt==='2h'){push([
+    newSeq('seq',{titre:'Ice-breaker & attentes',dureeMin:15,methode:'Photolangage'}),
+    newSeq('seq',{titre:'Module — apports ludiques',dureeMin:45,methode:'Serious game',outils:'Cartes pédagogiques'}),
+    newSeq('pause',{titre:'Pause',dureeMin:15}),
+    newSeq('seq',{titre:'Mise en pratique',dureeMin:30,methode:'Étude de cas',outils:'Cas clinique'}),
+    newSeq('seq',{titre:'Évaluation & synthèse',dureeMin:15,methode:'Quiz interactif (Wooclap/Kahoot)'})]);}
+  else if(fmt==='3h'){push([
+    newSeq('seq',{titre:'Accueil & attentes',dureeMin:15,methode:'Photolangage'}),
+    newSeq('seq',{titre:'Module 1 — apports fondamentaux',dureeMin:90,methode:'Exposé interactif',outils:'Wooclap'}),
+    newSeq('pause',{titre:'Pause',dureeMin:15}),
+    newSeq('seq',{titre:'Module 2 — atelier pratique',dureeMin:45,methode:'Jeu de rôle'}),
+    newSeq('seq',{titre:'Synthèse, quiz & plan d’action',dureeMin:15,methode:'Quiz interactif (Wooclap/Kahoot)'})]);}
+  else if(fmt==='1j'){scenario.push(newSeq('day',{dayLabel:'Jour 1'}));push(day());}
+  else if(fmt==='2j'){scenario.push(newSeq('day',{dayLabel:'Jour 1'}));push(day());scenario.push(inter());scenario.push(newSeq('day',{dayLabel:'Jour 2'}));push(day());}
+  else if(fmt==='3j'){scenario.push(newSeq('day',{dayLabel:'Jour 1'}));push(day());scenario.push(inter());scenario.push(newSeq('day',{dayLabel:'Jour 2'}));push(day());scenario.push(inter());scenario.push(newSeq('day',{dayLabel:'Jour 3'}));push(day());}
+  renderScenario();
+}
+
+/* ================= DATA ================= */
+function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function getData(){
+  var header={};HEADER_FIELDS.forEach(function(f){header[f.key]={label:f.label,value:val('h_'+f.key)};});
+  var wins=WINDOWS.map(function(w){
+    var s={};w.selects.forEach(function(x){s[x.key]={label:x.label,value:val('w_'+w.id+'_'+x.key)};});
+    return {id:w.id,num:w.num,phase:w.phase,title:w.title,subtitle:w.subtitle,selects:s,notes:val('n_'+w.id)};
+  });
+  return {header:header,windows:wins};
+}
+function winFilled(w){
+  var any=w.notes!=='';for(var k in w.selects){if(w.selects[k].value)any=true;}return any;
+}
+
+/* ================= PROGRESS ================= */
+function update(){
+  var d=getData(),done=0;
+  d.windows.forEach(function(w){
+    var f=winFilled(w),dot=document.getElementById('dot_'+w.id);
+    if(dot)dot.className='filledDot'+(f?' on':'');
+    if(f)done++;
+  });
+  document.getElementById('progFill').style.width=(done/7*100)+'%';
+  document.getElementById('progLbl').textContent=done+' / 7 fenêtres complétées';
+}
+
+/* ================= BUILDERS ================= */
+function fname(ext){
+  var p=val('h_projet')||'projet-formation';
+  p=p.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'projet-formation';
+  var dt=new Date().toISOString().split('T')[0];
+  return '7-fenetres_'+p+'_'+dt+'.'+ext;
+}
+function buildTXT(){
+  var d=getData(),L=[];
+  L.push('CANVAS DES 7 FENÊTRES — PROJET DE FORMATION');
+  L.push('='.repeat(52));L.push('');
+  L.push('■ EN-TÊTE — CADRAGE');
+  HEADER_FIELDS.forEach(function(f){L.push('  • '+f.label+' : '+(d.header[f.key].value||'—'));});
+  L.push('');
+  var order=['PRÉPARATION','DÉLIVRANCE','CONCLUSION'];
+  order.forEach(function(ph){
+    L.push('');L.push('▓▓ PHASE : '+ph+' — '+PHASE_TAG[ph]);
+    d.windows.filter(function(w){return w.phase===ph;}).forEach(function(w){
+      L.push('');L.push('  ['+w.num+'] '+w.title+' — '+w.subtitle);
+      for(var k in w.selects){L.push('      - '+w.selects[k].label+' : '+(w.selects[k].value||'—'));}
+      L.push('      - Précisions / scénario : '+(w.notes||'—'));
+    });
+  });
+  var sc=computeTimes();
+  if(scenario.length){
+    L.push('');L.push('');L.push('■ SCÉNARIO PÉDAGOGIQUE — PROGRAMME ('+(FORMATS[val('scnFormat')]||{label:''}).label+')');
+    sc.forEach(function(r){var it=r.it;
+      if(it.kind==='day'){L.push('');L.push('▓▓ '+(it.dayLabel||'Jour'));}
+      else if(it.kind==='inter'){L.push('');L.push('  ⟲ INTERSESSION — '+(it.titre||'')+' ('+(it.dureeText||'')+')');L.push('      Objectif : '+(it.objectifs||'—'));L.push('      Activité : '+(it.contenus||'—'));}
+      else if(it.kind==='pause'){L.push('  · '+r.s+'–'+r.e+'  '+(it.titre||'Pause')+' ('+it.dureeMin+' min)');}
+      else{L.push('');L.push('  '+r.s+'–'+r.e+'  ['+it.dureeMin+' min] '+(it.titre||'Séquence'));L.push('      Objectifs : '+(it.objectifs||'—'));L.push('      Contenus  : '+(it.contenus||'—'));L.push('      Méthode   : '+(it.methode||'—'));L.push('      Outils    : '+(it.outils||'—'));}
+    });
+  }
+  L.push('');L.push('-'.repeat(52));
+  L.push('Jean-Luc STANISLAS — Membre expert HAS, Programme PACTE');
+  L.push('Trame « 7 Fenêtres de l’ingénierie de formation » — '+new Date().toLocaleDateString('fr-FR'));
+  return L.join('\n');
+}
+function rowsForTable(){
+  var d=getData(),rows=[['Phase','Fenêtre','Champ','Valeur']];
+  HEADER_FIELDS.forEach(function(f){rows.push(['EN-TÊTE','Cadrage',f.label,d.header[f.key].value||'']);});
+  d.windows.forEach(function(w){
+    for(var k in w.selects){rows.push([w.phase,w.num+'. '+w.title,w.selects[k].label,w.selects[k].value||'']);}
+    rows.push([w.phase,w.num+'. '+w.title,'Précisions / scénario',w.notes||'']);
+  });
+  return rows;
+}
+function buildHTMLdoc(forWord){
+  var d=getData();
+  var head=forWord
+   ? '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Projet de formation</title></head>'
+   : '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Projet de formation — 7 Fenêtres</title></head>';
+  var css='<style>body{font-family:Calibri,Arial,sans-serif;color:#222;max-width:900px;margin:20px auto;padding:0 16px;line-height:1.5}h1{color:#8E2D5A;font-size:22px}h2{color:#B4472E;border-bottom:2px solid #eee;padding-bottom:4px;margin-top:26px}h3{margin:14px 0 4px}table{border-collapse:collapse;width:100%;margin:8px 0 18px}td,th{border:1px solid #ccc;padding:7px 9px;font-size:14px;vertical-align:top}th{background:#faf3f7;text-align:left;width:34%}.q{font-style:italic;color:#666;font-size:13px}.foot{margin-top:30px;color:#888;font-size:12px;border-top:1px solid #eee;padding-top:10px}</style>';
+  var b=head+'<body>'+css;
+  b+='<h1>Canvas des 7 Fenêtres — Projet de formation</h1>';
+  b+='<h2>En-tête — Cadrage</h2><table>';
+  HEADER_FIELDS.forEach(function(f){b+='<tr><th>'+f.label+'</th><td>'+esc(d.header[f.key].value)+'</td></tr>';});
+  b+='</table>';
+  ['PRÉPARATION','DÉLIVRANCE','CONCLUSION'].forEach(function(ph){
+    b+='<h2>Phase — '+ph+'</h2><p class="q">'+PHASE_TAG[ph]+'</p>';
+    d.windows.filter(function(w){return w.phase===ph;}).forEach(function(w){
+      b+='<h3>'+w.num+'. '+w.title+' — <span style="font-weight:normal;color:#666">'+w.subtitle+'</span></h3>';
+      b+='<p class="q">'+w.q+'</p><table>';
+      for(var k in w.selects){b+='<tr><th>'+w.selects[k].label+'</th><td>'+esc(w.selects[k].value)+'</td></tr>';}
+      b+='<tr><th>Précisions / scénario</th><td>'+esc(w.notes).replace(/\n/g,'<br>')+'</td></tr></table>';
+    });
+  });
+  var sc=computeTimes();
+  if(scenario.length){
+    b+='<h2>Scénario pédagogique — Programme ('+esc((FORMATS[val('scnFormat')]||{label:''}).label)+')</h2>';
+    b+='<table><tr><th style="width:14%">Horaire</th><th style="width:26%">Séquence</th><th style="width:10%">Durée</th><th>Objectifs / contenus</th><th style="width:20%">Méthode / outils</th></tr>';
+    sc.forEach(function(r){var it=r.it;
+      if(it.kind==='day'){b+='<tr><td colspan="5" style="background:#8E2D5A;color:#fff;font-weight:bold">'+esc(it.dayLabel||'Jour')+'</td></tr>';return;}
+      if(it.kind==='inter'){b+='<tr style="background:#faf3f7"><td>⟲</td><td><strong>'+esc(it.titre||'Intersession')+'</strong></td><td>'+esc(it.dureeText||'')+'</td><td>'+esc(it.objectifs||'')+(it.contenus?' — '+esc(it.contenus):'')+'</td><td>Ancrage terrain</td></tr>';return;}
+      var horaire=r.s+'–'+r.e,oc=esc(it.objectifs||'')+(it.contenus?'<br><em>'+esc(it.contenus)+'</em>':''),mo=esc(it.methode||'')+(it.outils?'<br>'+esc(it.outils):'');
+      b+='<tr'+(it.kind==='pause'?' style="background:#fafafa;color:#888"':'')+'><td>'+horaire+'</td><td>'+esc(it.titre||(it.kind==='pause'?'Pause':'Séquence'))+'</td><td>'+it.dureeMin+' min</td><td>'+(it.kind==='pause'?'':oc)+'</td><td>'+(it.kind==='pause'?'':mo)+'</td></tr>';
+    });
+    b+='</table>';
+  }
+  b+='<div class="foot"><strong>Jean-Luc STANISLAS</strong> — Membre expert HAS, Programme PACTE · Généré le '+new Date().toLocaleDateString('fr-FR')+'</div>';
+  b+='</body></html>';
+  return b;
+}
+function buildExcel(){
+  var rows=rowsForTable();
+  var t='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>';
+  t+='<table border="1"><tr><td colspan="4" style="background:#8E2D5A;color:#fff;font-weight:bold">RAISONNEMENT PÉDAGOGIQUE — 7 FENÊTRES</td></tr>';
+  rows.forEach(function(r,i){
+    t+='<tr>'+r.map(function(c){
+      var st=i===0?' style="background:#B4472E;color:#fff;font-weight:bold"':'';
+      return '<td'+st+'>'+esc(String(c))+'</td>';
+    }).join('')+'</tr>';
+  });
+  t+='</table><br><br>';
+  var sc=computeTimes();
+  t+='<table border="1"><tr><td colspan="7" style="background:#8E2D5A;color:#fff;font-weight:bold">SCÉNARIO PÉDAGOGIQUE — '+esc((FORMATS[val('scnFormat')]||{label:''}).label)+'</td></tr>';
+  t+='<tr>'+['Horaire','Type','Titre','Durée','Objectifs','Contenus','Méthode / Outils'].map(function(h){return '<td style="background:#D96C2C;color:#fff;font-weight:bold">'+h+'</td>';}).join('')+'</tr>';
+  sc.forEach(function(r){var it=r.it,
+    horaire=r.s?r.s+'–'+r.e:'',
+    dur=it.kind==='inter'?it.dureeText:(it.dureeMin?it.dureeMin+' min':''),
+    type={seq:'Séquence',pause:'Pause',inter:'Intersession',day:'— Jour —'}[it.kind],
+    titre=it.kind==='day'?(it.dayLabel||''):(it.titre||''),
+    mo=(it.methode||'')+(it.outils?' / '+it.outils:'');
+    t+='<tr><td>'+esc(horaire)+'</td><td>'+esc(type)+'</td><td>'+esc(titre)+'</td><td>'+esc(dur)+'</td><td>'+esc(it.objectifs||'')+'</td><td>'+esc(it.contenus||'')+'</td><td>'+esc(mo)+'</td></tr>';});
+  t+='</table></body></html>';
+  return t;
+}
+
+/* ================= DOWNLOAD / EXPORT ================= */
+function download(content,mime,filename){
+  try{
+    var blob=new Blob(['﻿'+content],{type:mime});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);return true;
+  }catch(e){return false;}
+}
+function toast(msg){
+  var t=document.getElementById('toast');t.textContent=msg;t.style.display='inline-block';
+  clearTimeout(window._tt);window._tt=setTimeout(function(){t.style.display='none';},4000);
+}
+function exportTXT(){ if(download(buildTXT(),'text/plain;charset=utf-8',fname('txt')))toast('✓ TXT téléchargé'); else openModal(buildTXT()); }
+function exportWord(){ if(download(buildHTMLdoc(true),'application/msword',fname('doc')))toast('✓ Word (.doc) téléchargé'); else openModal(buildHTMLdoc(true)); }
+function exportExcel(){ if(download(buildExcel(),'application/vnd.ms-excel',fname('xls')))toast('✓ Excel (.xls) téléchargé'); else openModal(buildExcel()); }
+function exportHTML(){ if(download(buildHTMLdoc(false),'text/html;charset=utf-8',fname('html')))toast('✓ HTML téléchargé → ouvrir puis Ctrl/Cmd+P pour PDF'); else openModal(buildHTMLdoc(false)); }
+
+function copyReport(){
+  var txt=buildTXT();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){toast('✓ Copié !');},function(){fallbackCopy(txt);});
+  }else{fallbackCopy(txt);}
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px';
+  document.body.appendChild(ta);ta.select();
+  var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+  if(ok)toast('✓ Copié !');else openModal(txt);
+}
+/* ---- Reprise de session JSON ---- */
+function buildSession(){
+  var s={_type:'canvas7fenetres',_v:1,header:{},windows:{},scenario:scenario,scnFormat:val('scnFormat'),scnStart:val('scnStart')};
+  HEADER_FIELDS.forEach(function(f){s.header[f.key]=val('h_'+f.key);});
+  WINDOWS.forEach(function(w){var o={notes:val('n_'+w.id)};w.selects.forEach(function(x){o[x.key]=val('w_'+w.id+'_'+x.key);});s.windows[w.id]=o;});
+  return s;
+}
+function exportJSON(){
+  if(download(JSON.stringify(buildSession(),null,2),'application/json;charset=utf-8',fname('json')))toast('✓ Session sauvegardée (.json)');
+  else openModal(JSON.stringify(buildSession(),null,2));
+}
+function importJSON(input){
+  var f=input.files&&input.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{restoreSession(JSON.parse(e.target.result));}
+    catch(err){alert('Fichier JSON illisible ou invalide.');}
+    input.value='';
+  };
+  rd.readAsText(f);
+}
+function restoreSession(s){
+  if(!s||s._type!=='canvas7fenetres'){alert('Ce fichier n’est pas une session de ce canvas.');return;}
+  HEADER_FIELDS.forEach(function(f){var el=document.getElementById('h_'+f.key);if(el)el.value=(s.header&&s.header[f.key])||'';});
+  WINDOWS.forEach(function(w){var o=(s.windows&&s.windows[w.id])||{};var n=document.getElementById('n_'+w.id);if(n)n.value=o.notes||'';w.selects.forEach(function(x){var el=document.getElementById('w_'+w.id+'_'+x.key);if(el)el.value=o[x.key]||'';});});
+  var fm=document.getElementById('scnFormat');if(fm&&s.scnFormat)fm.value=s.scnFormat;
+  var st=document.getElementById('scnStart');if(st&&s.scnStart)st.value=s.scnStart;
+  scenario=Array.isArray(s.scenario)?s.scenario:[];
+  var maxId=0;scenario.forEach(function(it){if(it&&it.id>maxId)maxId=it.id;});seqId=maxId;
+  update();renderScenario();toast('✓ Session restaurée');
+}
+function openModal(c){document.getElementById('modalTA').value=c;document.getElementById('modal').className='modal on';}
+function closeModal(){document.getElementById('modal').className='modal';}
+
+function resetAll(){
+  if(!confirm('Réinitialiser tout le canvas ? Les données non téléchargées seront perdues.'))return;
+  document.querySelectorAll('input,select,textarea').forEach(function(e){if(e.id!=='modalTA')e.value='';});
+  update();toast('↺ Canvas réinitialisé');
+}
+update();
+renderScenario();
+</script>
+</body>
+</html>
